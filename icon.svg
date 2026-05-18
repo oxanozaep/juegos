@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#1a1a1d"/>
+  <g font-family="-apple-system, system-ui, sans-serif" font-weight="800" text-anchor="middle">
+    <rect x="64" y="64" width="180" height="180" rx="20" fill="#edc22e"/>
+    <text x="154" y="180" font-size="100" fill="#1a1a1d">2048</text>
+    <rect x="268" y="268" width="180" height="180" rx="20" fill="#3b82f6"/>
+    <text x="358" y="384" font-size="120" fill="#f0f0f0">9</text>
+  </g>
+</svg>

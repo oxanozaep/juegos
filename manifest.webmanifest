@@ -1,0 +1,14 @@
+{
+  "name": "Mis Juegos",
+  "short_name": "Juegos",
+  "description": "Colección personal de juegos",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1a1a1d",
+  "theme_color": "#1a1a1d",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
