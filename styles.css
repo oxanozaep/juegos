@@ -387,6 +387,27 @@ button.ghost { background: transparent; }
 .cg-actions { display: flex; gap: 8px; }
 .cg-actions button { flex: 1; }
 
+/* Pac-Man directional buttons */
+.pac-turn-row { display: flex; gap: 10px; }
+.pac-turn-btn {
+  flex: 1;
+  font-size: 30px;
+  font-weight: 800;
+  padding: 14px 0;
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.pac-turn-btn:active {
+  background: var(--accent-2);
+  border-color: var(--accent-2);
+  color: #fff;
+  transform: scale(0.97);
+}
+
 /* ===== Wordle ===== */
 .wordle { display: flex; flex-direction: column; gap: 12px; align-items: stretch; }
 .wordle-grid {

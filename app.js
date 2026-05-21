@@ -7,8 +7,9 @@ import { SpaceInvaders } from './games/spaceinvaders.js';
 import { Flappy } from './games/flappy.js';
 import { Tetris } from './games/tetris.js';
 import { Pacman } from './games/pacman.js';
+import { Crossy } from './games/crossy.js';
 
-const games = [Game2048, Sudoku, Wordle, Breakout, Asteroids, SpaceInvaders, Flappy, Tetris, Pacman];
+const games = [Game2048, Sudoku, Wordle, Breakout, Asteroids, SpaceInvaders, Flappy, Tetris, Pacman, Crossy];
 const registry = Object.fromEntries(games.map(g => [g.id, g]));
 
 const app = document.getElementById('app');

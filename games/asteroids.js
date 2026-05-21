@@ -64,22 +64,32 @@ export const Asteroids = {
 
     const hint = document.createElement('div');
     hint.className = 'cg-hint';
-    hint.textContent = 'Toca lados: girar. Centro: empujar. Doble tap: disparar.';
+    hint.textContent = 'Toca: gira hacia ahí. Mantén: dispara. Boost: empuje.';
     shell.appendChild(hint);
 
-    const actions = document.createElement('div');
-    actions.className = 'cg-actions';
+    const boostRow = document.createElement('div');
+    boostRow.className = 'cg-actions';
+    const boostBtn = document.createElement('button');
+    boostBtn.textContent = '🚀 Boost';
+    boostRow.appendChild(boostBtn);
+    shell.appendChild(boostRow);
+
+    const newRow = document.createElement('div');
+    newRow.className = 'cg-actions';
     const newBtn = document.createElement('button');
     newBtn.className = 'primary';
     newBtn.textContent = 'Nueva partida';
-    actions.appendChild(newBtn);
-    shell.appendChild(actions);
+    newRow.appendChild(newBtn);
+    shell.appendChild(newRow);
 
     container.appendChild(shell);
 
     let ship, asteroids, bullets, lives, score, state, level, respawnT, invincT;
     let best = loadBest();
-    let input = { left: false, right: false, thrust: false, fire: false };
+    let target = null;
+    let firing = false;
+    let thrustHeld = false;
+    let keyRot = 0;
     let fireCooldown = 0;
 
     const cg = mountCanvas(gameWrap, { aspectRatio: '1 / 1', update, draw });
@@ -102,11 +112,16 @@ export const Asteroids = {
     function respawnShip() {
       ship = { x: W/2, y: H/2, vx: 0, vy: 0, a: -Math.PI / 2 };
       invincT = 2;
+      respawnT = 0;
     }
 
     function newGame() {
       score = 0; lives = 3;
       state = 'playing';
+      target = null;
+      firing = false;
+      thrustHeld = false;
+      keyRot = 0;
       newLevel(1);
       overlay.hide();
       updateBar();
@@ -149,9 +164,19 @@ export const Asteroids = {
         return;
       }
 
-      if (input.left)  ship.a -= SHIP_TURN * dt;
-      if (input.right) ship.a += SHIP_TURN * dt;
-      if (input.thrust) {
+      if (keyRot !== 0) {
+        ship.a += keyRot * SHIP_TURN * dt;
+        target = null;
+      } else if (target) {
+        const desired = Math.atan2(target.y - ship.y, target.x - ship.x);
+        let delta = desired - ship.a;
+        while (delta > Math.PI) delta -= Math.PI * 2;
+        while (delta < -Math.PI) delta += Math.PI * 2;
+        const maxTurn = SHIP_TURN * dt;
+        if (Math.abs(delta) <= maxTurn) ship.a = desired;
+        else ship.a += Math.sign(delta) * maxTurn;
+      }
+      if (thrustHeld) {
         ship.vx += Math.cos(ship.a) * SHIP_THRUST * dt;
         ship.vy += Math.sin(ship.a) * SHIP_THRUST * dt;
       }
@@ -160,7 +185,7 @@ export const Asteroids = {
       ship.x += ship.vx * dt;
       ship.y += ship.vy * dt;
       wrap(ship);
-      if (input.fire) fire();
+      if (firing) fire();
 
       for (const b of bullets) {
         b.x += b.vx * dt; b.y += b.vy * dt; b.life -= dt;
@@ -258,7 +283,7 @@ export const Asteroids = {
         ctx.lineTo(-SHIP_R * 0.7 * s, SHIP_R * s);
         ctx.closePath();
         ctx.stroke();
-        if (input.thrust) {
+        if (thrustHeld) {
           ctx.strokeStyle = '#f97316';
           ctx.beginPath();
           ctx.moveTo(-SHIP_R * 0.4 * s, SHIP_R * 0.7 * s);
@@ -270,55 +295,41 @@ export const Asteroids = {
       }
     }
 
-    // touch input: zones
-    const activeTouches = new Map(); // touchId → zone
-    function zoneOf(x, w) {
-      if (x < w * 0.33) return 'left';
-      if (x > w * 0.66) return 'right';
-      return 'thrust';
-    }
-    function refreshInput() {
-      input.left = false; input.right = false; input.thrust = false;
-      for (const z of activeTouches.values()) {
-        if (z === 'left') input.left = true;
-        else if (z === 'right') input.right = true;
-        else if (z === 'thrust') input.thrust = true;
-      }
-    }
-    let lastTap = 0;
-    cg.canvas.addEventListener('touchstart', e => {
-      e.preventDefault();
+    function updateTarget(e) {
       const rect = cg.canvas.getBoundingClientRect();
-      for (const t of e.changedTouches) {
-        const x = t.clientX - rect.left;
-        const z = zoneOf(x, rect.width);
-        activeTouches.set(t.identifier, z);
-      }
-      refreshInput();
-      const now = performance.now();
-      if (now - lastTap < 280) fire();
-      lastTap = now;
-    }, { passive: false });
-    cg.canvas.addEventListener('touchend', e => {
-      e.preventDefault();
-      for (const t of e.changedTouches) activeTouches.delete(t.identifier);
-      refreshInput();
-    }, { passive: false });
-    cg.canvas.addEventListener('touchcancel', e => {
-      for (const t of e.changedTouches) activeTouches.delete(t.identifier);
-      refreshInput();
-    });
+      const t = e.touches ? e.touches[0] : e;
+      if (!t) return;
+      const px = (t.clientX - rect.left) / rect.width * W;
+      const py = (t.clientY - rect.top) / rect.height * H;
+      target = { x: px, y: py };
+    }
+    cg.canvas.addEventListener('touchstart', e => { e.preventDefault(); updateTarget(e); firing = true; }, { passive: false });
+    cg.canvas.addEventListener('touchmove',  e => { e.preventDefault(); updateTarget(e); }, { passive: false });
+    cg.canvas.addEventListener('touchend',   e => { e.preventDefault(); firing = false; }, { passive: false });
+    cg.canvas.addEventListener('touchcancel', () => { firing = false; });
+    cg.canvas.addEventListener('mousedown', e => { updateTarget(e); firing = true; });
+    cg.canvas.addEventListener('mousemove', e => { if (e.buttons) updateTarget(e); });
+    cg.canvas.addEventListener('mouseup',  () => { firing = false; });
+    cg.canvas.addEventListener('mouseleave', () => { firing = false; });
+
+    boostBtn.addEventListener('touchstart', e => { e.preventDefault(); thrustHeld = true; }, { passive: false });
+    boostBtn.addEventListener('touchend',   e => { e.preventDefault(); thrustHeld = false; }, { passive: false });
+    boostBtn.addEventListener('touchcancel', () => { thrustHeld = false; });
+    boostBtn.addEventListener('mousedown', () => { thrustHeld = true; });
+    window.addEventListener('mouseup', () => { thrustHeld = false; });
+    boostBtn.addEventListener('mouseleave', () => { thrustHeld = false; });
 
     function onKeyDown(e) {
-      if (e.key === 'ArrowLeft' || e.key === 'a') { input.left = true; e.preventDefault(); }
-      else if (e.key === 'ArrowRight' || e.key === 'd') { input.right = true; e.preventDefault(); }
-      else if (e.key === 'ArrowUp' || e.key === 'w') { input.thrust = true; e.preventDefault(); }
-      else if (e.key === ' ') { fire(); e.preventDefault(); }
+      if (e.key === 'ArrowLeft' || e.key === 'a') { keyRot = -1; e.preventDefault(); }
+      else if (e.key === 'ArrowRight' || e.key === 'd') { keyRot = 1; e.preventDefault(); }
+      else if (e.key === 'ArrowUp' || e.key === 'w') { thrustHeld = true; e.preventDefault(); }
+      else if (e.key === ' ') { firing = true; e.preventDefault(); }
     }
     function onKeyUp(e) {
-      if (e.key === 'ArrowLeft' || e.key === 'a') input.left = false;
-      else if (e.key === 'ArrowRight' || e.key === 'd') input.right = false;
-      else if (e.key === 'ArrowUp' || e.key === 'w') input.thrust = false;
+      if ((e.key === 'ArrowLeft' || e.key === 'a') && keyRot < 0) keyRot = 0;
+      else if ((e.key === 'ArrowRight' || e.key === 'd') && keyRot > 0) keyRot = 0;
+      else if (e.key === 'ArrowUp' || e.key === 'w') thrustHeld = false;
+      else if (e.key === ' ') firing = false;
     }
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);

@@ -1,6 +1,8 @@
 import { mountCanvas, makeOverlay, makeStat, beep } from './engine.js';
 
 const COLS = 19, ROWS = 21;
+// Maze legend: # wall, ' ' void(wall), _ open walkable, . dot, o power,
+//              - door, T tunnel, P pacman spawn
 const MAZE_STR = [
   '###################',
   '#........#........#',
@@ -8,13 +10,13 @@ const MAZE_STR = [
   '#.................#',
   '#.##.#.#####.#.##.#',
   '#....#...#...#....#',
-  '####.### # ###.####',
-  '   #.#       #.#   ',
-  '####.# ##-## #.####',
-  'T   .  #   #  .   T',
-  '####.# ##### #.####',
-  '   #.#       #.#   ',
-  '####.### # ###.####',
+  '####.###_#_###.####',
+  '   #.#_______#.#   ',
+  '####.#_##-##_#.####',
+  'T___.__#___#__.___T',
+  '####.#_#####_#.####',
+  '   #.#_______#.#   ',
+  '####.###_#_###.####',
   '#........#........#',
   '#.##.###.#.###.##.#',
   '#o..#....P....#..o#',
@@ -36,6 +38,22 @@ const DIRS = {
 };
 const OPPOSITE = { up: 'down', down: 'up', left: 'right', right: 'left' };
 const DIR_NAMES = ['up', 'down', 'left', 'right'];
+// Order in which "left" and "right" buttons consider directions, given the
+// current heading. Priority is: actual rotation, then straight, then the
+// opposite rotation. The opposite of current direction (reverse) is excluded
+// because we don't normally allow 180° turns inside corridors.
+const LEFT_PRIORITY = {
+  up:    ['left',  'up',   'right'],
+  right: ['up',    'right','down'],
+  down:  ['right', 'down', 'left'],
+  left:  ['down',  'left', 'up']
+};
+const RIGHT_PRIORITY = {
+  up:    ['right', 'up',   'left'],
+  right: ['down',  'right','up'],
+  down:  ['left',  'down', 'right'],
+  left:  ['up',    'left', 'down']
+};
 
 export const Pacman = {
   id: 'pacman',
@@ -60,8 +78,22 @@ export const Pacman = {
 
     const hint = document.createElement('div');
     hint.className = 'cg-hint';
-    hint.textContent = 'Desliza para cambiar de dirección';
+    hint.textContent = 'Toca el tablero o un botón para empezar';
     shell.appendChild(hint);
+
+    const turnRow = document.createElement('div');
+    turnRow.className = 'pac-turn-row';
+    const turnLeftBtn = document.createElement('button');
+    turnLeftBtn.className = 'pac-turn-btn';
+    turnLeftBtn.textContent = '←';
+    turnLeftBtn.setAttribute('aria-label', 'Girar a la izquierda');
+    const turnRightBtn = document.createElement('button');
+    turnRightBtn.className = 'pac-turn-btn';
+    turnRightBtn.textContent = '→';
+    turnRightBtn.setAttribute('aria-label', 'Girar a la derecha');
+    turnRow.appendChild(turnLeftBtn);
+    turnRow.appendChild(turnRightBtn);
+    shell.appendChild(turnRow);
 
     const actions = document.createElement('div');
     actions.className = 'cg-actions';
@@ -82,13 +114,14 @@ export const Pacman = {
         const row = [];
         for (let x = 0; x < COLS; x++) {
           const ch = MAZE_STR[y][x];
-          let t = 0;
-          if (ch === '#') t = 1;
-          else if (ch === '.') { t = 2; totalDots++; }
+          let t;
+          if (ch === '.') { t = 2; totalDots++; }
           else if (ch === 'o') { t = 3; totalDots++; }
           else if (ch === '-') t = 4;
           else if (ch === 'T') t = 5;
+          else if (ch === '_') t = 0;
           else if (ch === 'P') { t = 0; pacSpawn = { x, y }; }
+          else t = 1; // '#', ' ' and anything else → wall
           row.push(t);
         }
         tiles.push(row);
@@ -105,6 +138,7 @@ export const Pacman = {
     }
 
     let pac, ghosts, score, lives, level, state, frightT, frightChain, dotsLeft;
+    let bufferedTurn = null;
     let best = loadBest();
 
     const cg = mountCanvas(gameWrap, { aspectRatio: `${COLS} / ${ROWS}`, update, draw });
@@ -145,8 +179,10 @@ export const Pacman = {
       score = 0; lives = 3; level = 1;
       dotsLeft = totalDots;
       resetEntities();
-      state = 'playing';
+      state = 'ready';
+      bufferedTurn = null;
       overlay.hide();
+      hint.style.visibility = 'visible';
       updateBar();
     }
 
@@ -171,6 +207,9 @@ export const Pacman = {
       dotsLeft = totalDots;
       resetEntities();
       for (const g of ghosts) g.baseSpeed = Math.min(9, 7.5 + (level - 1) * 0.3);
+      state = 'ready';
+      bufferedTurn = null;
+      hint.style.visibility = 'visible';
       updateBar();
     }
 
@@ -185,17 +224,31 @@ export const Pacman = {
     }
 
     function pacAi() {
-      if (pac.nextDir) {
-        const d = DIRS[pac.nextDir];
-        if (isWalkable(pac.tx + d.x, pac.ty + d.y)) {
-          const newDir = pac.nextDir;
-          if (newDir !== pac.dir) pac.nextDir = null;
-          return newDir;
+      const back = OPPOSITE[pac.dir];
+      const opts = DIR_NAMES.filter(d =>
+        d !== back && isWalkable(pac.tx + DIRS[d].x, pac.ty + DIRS[d].y));
+
+      // Apply user-buffered turn using priority lists (smart pick)
+      if (bufferedTurn) {
+        const priority = (bufferedTurn === 'left' ? LEFT_PRIORITY : RIGHT_PRIORITY)[pac.dir];
+        for (const d of priority) {
+          if (opts.includes(d)) {
+            bufferedTurn = null;
+            return d;
+          }
         }
+        // Dead end fallback: allow reverse if buffered turn was pressed
+        if (isWalkable(pac.tx + DIRS[back].x, pac.ty + DIRS[back].y)) {
+          bufferedTurn = null;
+          return back;
+        }
+        bufferedTurn = null;
+        return null;
       }
-      const d = DIRS[pac.dir];
-      if (isWalkable(pac.tx + d.x, pac.ty + d.y)) return pac.dir;
-      return null;
+
+      if (opts.length === 0) return null;        // dead end without input
+      if (opts.length === 1) return opts[0];     // corridor / L-turn: auto-follow
+      return null;                                // intersection: wait for input
     }
 
     function ghostTarget(g) {
@@ -428,41 +481,30 @@ export const Pacman = {
       ctx.fill();
     }
 
-    // input
-    let touchStart = null;
-    cg.canvas.addEventListener('touchstart', e => {
-      e.preventDefault();
-      const t = e.touches[0];
-      touchStart = { x: t.clientX, y: t.clientY };
-    }, { passive: false });
-    cg.canvas.addEventListener('touchmove', e => {
-      e.preventDefault();
-      if (!touchStart) return;
-      const t = e.touches[0];
-      const dx = t.clientX - touchStart.x;
-      const dy = t.clientY - touchStart.y;
-      const TH = 18;
-      if (Math.max(Math.abs(dx), Math.abs(dy)) < TH) return;
-      const dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
-      pac.nextDir = dir;
-      if (dir === OPPOSITE[pac.dir] && pac.progress > 0 && pac.progress < 1) {
-        const od = DIRS[pac.dir];
-        pac.tx += od.x; pac.ty += od.y;
-        pac.dir = dir;
-        pac.progress = 1 - pac.progress;
-        pac.nextDir = null;
+    function startIfReady() {
+      if (state === 'ready') {
+        state = 'playing';
+        hint.style.visibility = 'hidden';
       }
-      touchStart = { x: t.clientX, y: t.clientY };
-    }, { passive: false });
-    cg.canvas.addEventListener('touchend', e => { e.preventDefault(); touchStart = null; }, { passive: false });
+    }
+    function pressTurn(side) {
+      bufferedTurn = side;
+      startIfReady();
+    }
+    function bindTurnBtn(btn, side) {
+      const press = e => { e.preventDefault(); pressTurn(side); };
+      btn.addEventListener('touchstart', press, { passive: false });
+      btn.addEventListener('mousedown', press);
+    }
+    bindTurnBtn(turnLeftBtn, 'left');
+    bindTurnBtn(turnRightBtn, 'right');
+
+    cg.canvas.addEventListener('touchstart', e => { e.preventDefault(); startIfReady(); }, { passive: false });
+    cg.canvas.addEventListener('mousedown', () => startIfReady());
 
     function onKey(e) {
-      const map = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right',
-                    w: 'up', s: 'down', a: 'left', d: 'right' };
-      const dir = map[e.key];
-      if (!dir) return;
-      e.preventDefault();
-      pac.nextDir = dir;
+      if (e.key === 'ArrowLeft' || e.key === 'a') { e.preventDefault(); pressTurn('left'); }
+      else if (e.key === 'ArrowRight' || e.key === 'd') { e.preventDefault(); pressTurn('right'); }
     }
     window.addEventListener('keydown', onKey);
     newBtn.addEventListener('click', newGame);

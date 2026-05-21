@@ -91,6 +91,8 @@ export const Tetris = {
     let best = loadBest();
 
     const cg = mountCanvas(gameWrap, { aspectRatio: '1 / 2', update, draw });
+    cg.wrap.style.maxHeight = '62vh';
+    cg.wrap.style.margin = '0 auto';
     const overlay = makeOverlay(cg.wrap);
 
     function refillBag() {

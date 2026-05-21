@@ -15,6 +15,46 @@ const SHIELD_Y = PLAYER_Y - 14;
 
 const ALIEN_COLORS = ['#f87171', '#fb923c', '#facc15', '#34d399', '#60a5fa'];
 
+const ALIEN_SPRITES = [
+  // type 0: squid (top row)
+  ['..XXX..',
+   '.XXXXX.',
+   'XX.X.XX',
+   'XXXXXXX',
+   '.X.X.X.',
+   'X.....X'],
+  // type 1: crab (middle rows)
+  ['X.....X',
+   '.X.X.X.',
+   'XXXXXXX',
+   'XX.X.XX',
+   '.XXXXX.',
+   'X..X..X'],
+  // type 2: octopus (bottom rows)
+  ['.XXXXX.',
+   'XXXXXXX',
+   'X.X.X.X',
+   'XXXXXXX',
+   '.X.X.X.',
+   'X.X.X.X']
+];
+
+function drawAlien(ctx, x, y, w, h, color, type) {
+  const pat = ALIEN_SPRITES[type % ALIEN_SPRITES.length];
+  const cols = pat[0].length;
+  const rows = pat.length;
+  const pw = w / cols;
+  const ph = h / rows;
+  ctx.fillStyle = color;
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      if (pat[r][c] === 'X') {
+        ctx.fillRect(x + c * pw, y + r * ph, pw + 0.5, ph + 0.5);
+      }
+    }
+  }
+}
+
 export const SpaceInvaders = {
   id: 'invaders',
   name: 'Invaders',
@@ -52,6 +92,7 @@ export const SpaceInvaders = {
     container.appendChild(shell);
 
     let player, aliens, alienDir, alienStepT, stepInterval, bullets, alienBullets, shields, lives, score, level, state, fireCooldown;
+    let firing = false;
     let best = loadBest();
 
     const cg = mountCanvas(gameWrap, { aspectRatio: '3 / 4', update, draw });
@@ -136,6 +177,7 @@ export const SpaceInvaders = {
     function update(dt) {
       if (state !== 'playing') return;
       fireCooldown = Math.max(0, fireCooldown - dt);
+      if (firing) fire();
 
       // alien step
       const alive = aliens.filter(a => a.alive);
@@ -232,8 +274,8 @@ export const SpaceInvaders = {
       // aliens
       for (const a of aliens) {
         if (!a.alive) continue;
-        ctx.fillStyle = ALIEN_COLORS[a.row % ALIEN_COLORS.length];
-        ctx.fillRect(a.x * s, a.y * s, a.w * s, a.h * s);
+        const type = a.row === 0 ? 0 : (a.row <= 2 ? 1 : 2);
+        drawAlien(ctx, a.x * s, a.y * s, a.w * s, a.h * s, ALIEN_COLORS[a.row], type);
       }
       // shields
       ctx.fillStyle = '#22c55e';
@@ -258,28 +300,33 @@ export const SpaceInvaders = {
       const px = (t.clientX - rect.left) / rect.width * W;
       player.x = clamp(px - PLAYER_W / 2, 0, W - PLAYER_W);
     }
-    function pointerDown(e) {
-      pointerMove(e);
-      fire();
-    }
-    cg.canvas.addEventListener('touchstart', e => { e.preventDefault(); pointerDown(e); }, { passive: false });
+    cg.canvas.addEventListener('touchstart', e => { e.preventDefault(); pointerMove(e); firing = true; }, { passive: false });
     cg.canvas.addEventListener('touchmove',  e => { e.preventDefault(); pointerMove(e); }, { passive: false });
-    cg.canvas.addEventListener('mousedown', pointerDown);
+    cg.canvas.addEventListener('touchend',   e => { e.preventDefault(); firing = false; }, { passive: false });
+    cg.canvas.addEventListener('touchcancel', () => { firing = false; });
+    cg.canvas.addEventListener('mousedown', e => { pointerMove(e); firing = true; });
     cg.canvas.addEventListener('mousemove', e => { if (e.buttons) pointerMove(e); });
+    cg.canvas.addEventListener('mouseup', () => { firing = false; });
+    cg.canvas.addEventListener('mouseleave', () => { firing = false; });
 
-    function onKey(e) {
+    function onKeyDown(e) {
       if (e.key === 'ArrowLeft' || e.key === 'a') { player.x = clamp(player.x - 5, 0, W - PLAYER_W); e.preventDefault(); }
       else if (e.key === 'ArrowRight' || e.key === 'd') { player.x = clamp(player.x + 5, 0, W - PLAYER_W); e.preventDefault(); }
-      else if (e.key === ' ' || e.key === 'Enter') { fire(); e.preventDefault(); }
+      else if (e.key === ' ' || e.key === 'Enter') { firing = true; e.preventDefault(); }
     }
-    window.addEventListener('keydown', onKey);
+    function onKeyUp(e) {
+      if (e.key === ' ' || e.key === 'Enter') firing = false;
+    }
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
     newBtn.addEventListener('click', newGame);
 
     newGame();
 
     return () => {
       cg.destroy();
-      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
     };
   }
 };
