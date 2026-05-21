@@ -8,6 +8,81 @@ const BALL_R = 1.3;
 const ROWS = 6, COLS = 9;
 const PALETTE = ['#ef4444', '#f59e0b', '#eab308', '#22c55e', '#3b82f6', '#a855f7'];
 
+const PATTERNS = [
+  // 1. Pyramid
+  [
+    '....X....',
+    '...XXX...',
+    '..XXXXX..',
+    '.XXXXXXX.',
+    'XXXXXXXXX',
+    'XXXXXXXXX'
+  ],
+  // 2. Heart
+  [
+    '.XX...XX.',
+    'XXXX.XXXX',
+    'XXXXXXXXX',
+    '.XXXXXXX.',
+    '..XXXXX..',
+    '...XXX...'
+  ],
+  // 3. Checkerboard
+  [
+    'X.X.X.X.X',
+    '.X.X.X.X.',
+    'X.X.X.X.X',
+    '.X.X.X.X.',
+    'X.X.X.X.X',
+    '.X.X.X.X.'
+  ],
+  // 4. Smiley Face
+  [
+    '.........',
+    '.X.X.X.X.',
+    '.X.X.X.X.',
+    '.........',
+    'X.......X',
+    '.XXXXXXX.'
+  ],
+  // 5. Diamond
+  [
+    '....X....',
+    '...XXX...',
+    '..XXXXX..',
+    '..XXXXX..',
+    '...XXX...',
+    '....X....'
+  ],
+  // 6. Chevron (V-shape)
+  [
+    'X.......X',
+    '.X.....X.',
+    '..X...X..',
+    '...X.X...',
+    '....X....',
+    '.........'
+  ],
+  // 7. Space Invader / Alien
+  [
+    '..X...X..',
+    '.XXXXXXX.',
+    'XX.X.X.XX',
+    'XXXXXXXXX',
+    '.X.X.X.X.',
+    'X.......X'
+  ],
+  // 8. Classic full grid
+  [
+    'XXXXXXXXX',
+    'XXXXXXXXX',
+    'XXXXXXXXX',
+    'XXXXXXXXX',
+    'XXXXXXXXX',
+    'XXXXXXXXX'
+  ]
+];
+
 export const Breakout = {
   id: 'breakout',
   name: 'Breakout',
@@ -58,16 +133,22 @@ export const Breakout = {
       const bw = (W - margin * 2 - (COLS - 1) * 0.5) / COLS;
       const bh = 3;
       bricks = [];
+
+      // Pick a random brick formation pattern
+      const pattern = PATTERNS[Math.floor(Math.random() * PATTERNS.length)];
+
       for (let r = 0; r < ROWS; r++) {
         for (let c = 0; c < COLS; c++) {
-          bricks.push({
-            x: margin + c * (bw + 0.5),
-            y: top + r * (bh + 0.5),
-            w: bw, h: bh,
-            color: PALETTE[r % PALETTE.length],
-            points: (ROWS - r) * 10,
-            alive: true
-          });
+          if (pattern[r][c] === 'X') {
+            bricks.push({
+              x: margin + c * (bw + 0.5),
+              y: top + r * (bh + 0.5),
+              w: bw, h: bh,
+              color: PALETTE[r % PALETTE.length],
+              points: (ROWS - r) * 10,
+              alive: true
+            });
+          }
         }
       }
       resetBall();

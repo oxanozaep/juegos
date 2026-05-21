@@ -91,7 +91,7 @@ export const Tetris = {
     let best = loadBest();
 
     const cg = mountCanvas(gameWrap, { aspectRatio: '1 / 2', update, draw });
-    cg.wrap.style.maxHeight = '62vh';
+    cg.wrap.style.maxHeight = '52vh';
     cg.wrap.style.margin = '0 auto';
     const overlay = makeOverlay(cg.wrap);
 
@@ -208,38 +208,55 @@ export const Tetris = {
     }
 
     function draw(ctx, w, h) {
-      const cell = w / COLS;
+      const cell = Math.min(w / COLS, h / ROWS);
+      const offsetX = (w - COLS * cell) / 2;
+      const offsetY = (h - ROWS * cell) / 2;
+
       ctx.fillStyle = '#0c0c10';
       ctx.fillRect(0, 0, w, h);
+
+      // Draw background of the grid area
+      ctx.fillStyle = '#050508';
+      ctx.fillRect(offsetX, offsetY, COLS * cell, ROWS * cell);
+
       // grid bg lines
       ctx.strokeStyle = '#1d1d24';
       ctx.lineWidth = 1;
-      for (let x = 1; x < COLS; x++) {
-        ctx.beginPath(); ctx.moveTo(x * cell, 0); ctx.lineTo(x * cell, h); ctx.stroke();
+      for (let x = 0; x <= COLS; x++) {
+        ctx.beginPath();
+        ctx.moveTo(offsetX + x * cell, offsetY);
+        ctx.lineTo(offsetX + x * cell, offsetY + ROWS * cell);
+        ctx.stroke();
       }
-      for (let y = 1; y < ROWS; y++) {
-        ctx.beginPath(); ctx.moveTo(0, y * cell); ctx.lineTo(w, y * cell); ctx.stroke();
+      for (let y = 0; y <= ROWS; y++) {
+        ctx.beginPath();
+        ctx.moveTo(offsetX, offsetY + y * cell);
+        ctx.lineTo(offsetX + COLS * cell, offsetY + y * cell);
+        ctx.stroke();
       }
+
       // grid blocks
       for (let y = 0; y < ROWS; y++) {
         for (let x = 0; x < COLS; x++) {
-          if (grid[y][x]) drawCell(ctx, x, y, cell, grid[y][x]);
+          if (grid[y][x]) drawCell(ctx, x, y, cell, grid[y][x], offsetX, offsetY);
         }
       }
       // current piece
       if (piece) {
         const shape = PIECES[piece.type].shapes[piece.rot % PIECES[piece.type].shapes.length];
         for (const [dx, dy] of shape) {
-          drawCell(ctx, piece.x + dx, piece.y + dy, cell, PIECES[piece.type].color);
+          drawCell(ctx, piece.x + dx, piece.y + dy, cell, PIECES[piece.type].color, offsetX, offsetY);
         }
       }
     }
 
-    function drawCell(ctx, x, y, cell, color) {
+    function drawCell(ctx, x, y, cell, color, offsetX, offsetY) {
+      const px = offsetX + x * cell;
+      const py = offsetY + y * cell;
       ctx.fillStyle = color;
-      ctx.fillRect(x * cell + 1, y * cell + 1, cell - 2, cell - 2);
+      ctx.fillRect(px + 1, py + 1, cell - 2, cell - 2);
       ctx.fillStyle = 'rgba(255,255,255,0.18)';
-      ctx.fillRect(x * cell + 1, y * cell + 1, cell - 2, Math.max(2, cell * 0.18));
+      ctx.fillRect(px + 1, py + 1, cell - 2, Math.max(2, cell * 0.18));
     }
 
     // input: touch swipes + taps

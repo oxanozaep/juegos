@@ -292,6 +292,16 @@ export const Pacman = {
     }
 
     function step(ent, dt, speed, ai, allowDoor) {
+      if (ent.progress === 0) {
+        const chosen = ai();
+        if (chosen) ent.dir = chosen;
+        const d = DIRS[ent.dir];
+        if (!isWalkable(ent.tx + d.x, ent.ty + d.y, allowDoor)) {
+          ent.x = ent.tx; ent.y = ent.ty;
+          return;
+        }
+      }
+
       ent.progress += speed * dt;
       while (ent.progress >= 1) {
         ent.progress -= 1;

@@ -15,6 +15,65 @@ const SHIELD_Y = PLAYER_Y - 14;
 
 const ALIEN_COLORS = ['#f87171', '#fb923c', '#facc15', '#34d399', '#60a5fa'];
 
+const ALIEN_PATTERNS = [
+  // 1. Classic grid
+  [
+    'XXXXXXXXXXX',
+    'XXXXXXXXXXX',
+    'XXXXXXXXXXX',
+    'XXXXXXXXXXX',
+    'XXXXXXXXXXX'
+  ],
+  // 2. V-formation
+  [
+    'X.........X',
+    '.X.......X.',
+    '..X.....X..',
+    '...X...X...',
+    '....XXX....'
+  ],
+  // 3. X-shape
+  [
+    'X.........X',
+    '.X.......X.',
+    '..X.X.X.X..',
+    '...X.X.X...',
+    '....X.X....'
+  ],
+  // 4. Space Cross
+  [
+    '.....X.....',
+    '....XXX....',
+    'XXXXXXXXXXX',
+    '....XXX....',
+    '.....X.....'
+  ],
+  // 5. Checkerboard
+  [
+    'X.X.X.X.X.X',
+    '.X.X.X.X.X.',
+    'X.X.X.X.X.X',
+    '.X.X.X.X.X.',
+    'X.X.X.X.X.X'
+  ],
+  // 6. W-Shape
+  [
+    'X.........X',
+    '.X.......X.',
+    '..X..X..X..',
+    '...X.X.X...',
+    '....X.X....'
+  ],
+  // 7. Fortress / Castle layout
+  [
+    'X.XX.X.XX.X',
+    'XXXXXXXXXXX',
+    'X.X.X.X.X.X',
+    'XX.XXX.XX.X',
+    'X.........X'
+  ]
+];
+
 const ALIEN_SPRITES = [
   // type 0: squid (top row)
   ['..XXX..',
@@ -124,15 +183,21 @@ export const SpaceInvaders = {
       const totalW = COLS * ALIEN_W + (COLS - 1) * (ALIEN_GX - ALIEN_W);
       const startX = (W - COLS * ALIEN_W - (COLS - 1) * 1.5) / 2;
       const startY = 10 + Math.min(l - 1, 4) * 3;
+
+      // Pick a random alien formation pattern
+      const pattern = ALIEN_PATTERNS[Math.floor(Math.random() * ALIEN_PATTERNS.length)];
+
       for (let r = 0; r < ROWS; r++) {
         for (let c = 0; c < COLS; c++) {
-          aliens.push({
-            x: startX + c * (ALIEN_W + 1.5),
-            y: startY + r * (ALIEN_H + 1.5),
-            w: ALIEN_W, h: ALIEN_H,
-            row: r,
-            alive: true
-          });
+          if (pattern[r][c] === 'X') {
+            aliens.push({
+              x: startX + c * (ALIEN_W + 1.5),
+              y: startY + r * (ALIEN_H + 1.5),
+              w: ALIEN_W, h: ALIEN_H,
+              row: r,
+              alive: true
+            });
+          }
         }
       }
       alienDir = 1;

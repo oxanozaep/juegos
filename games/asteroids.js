@@ -168,7 +168,7 @@ export const Asteroids = {
         ship.a += keyRot * SHIP_TURN * dt;
         target = null;
       } else if (target) {
-        const desired = Math.atan2(target.y - ship.y, target.x - ship.x);
+        const desired = Math.atan2(ship.y - target.y, ship.x - target.x);
         let delta = desired - ship.a;
         while (delta > Math.PI) delta -= Math.PI * 2;
         while (delta < -Math.PI) delta += Math.PI * 2;
