@@ -119,7 +119,7 @@ function pickWord() {
 const KB_ROWS = [
   ['Q','W','E','R','T','Y','U','I','O','P'],
   ['A','S','D','F','G','H','J','K','L','Ñ'],
-  ['ENTER','Z','X','C','V','B','N','M','BACK']
+  ['NUEVA','Z','X','C','V','B','N','M','BACK']
 ];
 
 export const Wordle = {
@@ -159,8 +159,8 @@ export const Wordle = {
       r.className = 'wordle-kb-row';
       for (const k of row) {
         const b = document.createElement('button');
-        b.className = 'wordle-key' + ((k === 'ENTER' || k === 'BACK') ? ' wide' : '');
-        b.textContent = k === 'BACK' ? '⌫' : k;
+        b.className = 'wordle-key' + ((k === 'NUEVA' || k === 'BACK') ? ' wide' : '');
+        b.textContent = k === 'BACK' ? '⌫' : (k === 'NUEVA' ? 'Nueva' : k);
         b.addEventListener('click', () => handleKey(k));
         r.appendChild(b);
         if (k.length === 1) keyButtons[k] = b;
@@ -171,11 +171,11 @@ export const Wordle = {
 
     const actions = document.createElement('div');
     actions.className = 'wordle-actions';
-    const newBtn = document.createElement('button');
-    newBtn.className = 'primary';
-    newBtn.textContent = 'Nueva palabra';
-    newBtn.addEventListener('click', startNew);
-    actions.appendChild(newBtn);
+    const enterBtn = document.createElement('button');
+    enterBtn.className = 'primary';
+    enterBtn.textContent = 'Enter';
+    enterBtn.addEventListener('click', () => handleKey('ENTER'));
+    actions.appendChild(enterBtn);
     root.appendChild(actions);
 
     container.appendChild(root);
@@ -241,6 +241,7 @@ export const Wordle = {
       renderGrid(shakeRow);
       renderKeyboard();
       renderBanner();
+      enterBtn.disabled = !!finished;
     }
 
     function updateKb(word, evals) {
@@ -296,6 +297,7 @@ export const Wordle = {
     }
 
     function handleKey(k) {
+      if (k === 'NUEVA') { startNew(); return; }
       if (finished) return;
       if (k === 'ENTER') { submit(); return; }
       if (k === 'BACK') {

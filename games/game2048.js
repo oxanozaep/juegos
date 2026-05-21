@@ -127,7 +127,7 @@ export const Game2048 = {
   description: 'Desliza y combina hasta 2048',
 
   mount(container) {
-    let grid, score, best, wonNotified = false, gameOver = false, newCell = null;
+    let grid, score, best, wonAcknowledged = false, showWinOverlay = false, gameOver = false, newCell = null;
 
     const root = document.createElement('div');
     root.className = 'g2048';
@@ -182,7 +182,7 @@ export const Game2048 = {
       const existing = board.querySelector('.g2048-overlay');
       if (existing) existing.remove();
       if (gameOver) showOverlay('¡Fin del juego!', 'Reintentar');
-      else if (wonNotified) showOverlay('¡2048! Sigues jugando…', 'Continuar', true);
+      else if (showWinOverlay) showOverlay('¡2048! Sigues jugando…', 'Continuar', true);
     }
 
     function showOverlay(message, btnText, transient = false) {
@@ -195,7 +195,7 @@ export const Game2048 = {
       btn.className = 'primary';
       btn.textContent = btnText;
       btn.addEventListener('click', () => {
-        if (transient) { wonNotified = false; render(); }
+        if (transient) { showWinOverlay = false; render(); }
         else { startNew(); }
       });
       ov.appendChild(msg);
@@ -212,22 +212,26 @@ export const Game2048 = {
       if (score > best) { best = score; setBest(best); }
       const spawned = spawn(grid);
       newCell = spawned;
-      if (!wonNotified && reachedWin(grid)) wonNotified = true;
+      if (!wonAcknowledged && reachedWin(grid)) {
+        wonAcknowledged = true;
+        showWinOverlay = true;
+      }
       if (!canMove(grid)) { gameOver = true; clearState(); }
-      else saveState({ grid, score, wonNotified });
+      else saveState({ grid, score, wonAcknowledged });
       render();
     }
 
     function startNew() {
       grid = emptyGrid();
       score = 0;
-      wonNotified = false;
+      wonAcknowledged = false;
+      showWinOverlay = false;
       gameOver = false;
       newCell = null;
       spawn(grid);
       spawn(grid);
       clearState();
-      saveState({ grid, score, wonNotified });
+      saveState({ grid, score, wonAcknowledged });
       render();
     }
 
@@ -236,13 +240,14 @@ export const Game2048 = {
     if (saved && canMove(saved.grid)) {
       grid = saved.grid;
       score = saved.score || 0;
-      wonNotified = !!saved.wonNotified;
+      wonAcknowledged = !!(saved.wonAcknowledged || saved.wonNotified);
+      showWinOverlay = false;
       gameOver = false;
     } else {
       grid = emptyGrid();
       score = 0;
       spawn(grid); spawn(grid);
-      saveState({ grid, score, wonNotified: false });
+      saveState({ grid, score, wonAcknowledged: false });
     }
     render();
 

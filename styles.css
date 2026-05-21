@@ -128,10 +128,13 @@ button.ghost { background: transparent; }
   touch-action: none;
 }
 .g2048-cell {
+  position: relative;
   background: var(--surface-2);
   border-radius: 8px;
 }
 .g2048-tile {
+  position: absolute;
+  inset: 0;
   background: #eee4da;
   color: #776e65;
   border-radius: 8px;
@@ -329,10 +332,10 @@ button.ghost { background: transparent; }
 }
 .sudoku-banner.record { background: rgba(245, 158, 11, 0.18); border-color: var(--accent); color: var(--accent); }
 
-/* ===== Snake ===== */
-.snake { display: flex; flex-direction: column; gap: 12px; }
-.snake-bar { display: flex; gap: 10px; }
-.snake-stat {
+/* ===== Canvas games (Breakout, Asteroids, Invaders, Flappy, Tetris, Pac-Man) ===== */
+.cg-shell { display: flex; flex-direction: column; gap: 12px; }
+.cg-bar { display: flex; gap: 10px; }
+.cg-stat {
   flex: 1;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -340,65 +343,49 @@ button.ghost { background: transparent; }
   padding: 8px 12px;
   text-align: center;
 }
-.snake-stat .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
-.snake-stat .value { font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.cg-stat .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+.cg-stat .value { font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; }
 
-.snake-board-wrap {
+.canvas-game {
   position: relative;
   width: 100%;
-  aspect-ratio: 1 / 1;
+  background: #000;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border);
 }
-.snake-board {
+.canvas-game canvas {
+  display: block;
   width: 100%;
   height: 100%;
-  display: grid;
-  gap: 1px;
-  padding: 4px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
   touch-action: none;
 }
-.snake-cell {
-  background: var(--surface-2);
-  border-radius: 2px;
-}
-.snake-cell.body {
-  background: #16a34a;
-  border-radius: 3px;
-}
-.snake-cell.head {
-  background: #4ade80;
-  border-radius: 4px;
-  box-shadow: 0 0 6px rgba(74, 222, 128, 0.7);
-}
-.snake-cell.food {
-  background: #ef4444;
-  border-radius: 50%;
-  box-shadow: 0 0 6px rgba(239, 68, 68, 0.6);
-}
-.snake-overlay {
+.cg-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(26, 26, 29, 0.88);
-  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.75);
+  color: var(--text);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 12px;
+  padding: 16px;
+  text-align: center;
+  z-index: 5;
 }
-.snake-overlay .msg { font-size: 22px; font-weight: 800; }
-.snake-overlay .score { color: var(--muted); }
+.cg-overlay.hidden { display: none; }
+.cg-overlay .msg { font-size: 22px; font-weight: 800; }
+.cg-overlay .sub { color: var(--muted); font-size: 14px; }
 
-.snake-hint {
+.cg-hint {
   text-align: center;
   color: var(--muted);
   font-size: 13px;
   min-height: 18px;
 }
-.snake-actions { display: flex; gap: 8px; }
-.snake-actions button { flex: 1; }
+.cg-actions { display: flex; gap: 8px; }
+.cg-actions button { flex: 1; }
 
 /* ===== Wordle ===== */
 .wordle { display: flex; flex-direction: column; gap: 12px; align-items: stretch; }

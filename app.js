@@ -1,9 +1,14 @@
 import { Game2048 } from './games/game2048.js';
 import { Sudoku } from './games/sudoku.js';
-import { Snake } from './games/snake.js';
 import { Wordle } from './games/wordle.js';
+import { Breakout } from './games/breakout.js';
+import { Asteroids } from './games/asteroids.js';
+import { SpaceInvaders } from './games/spaceinvaders.js';
+import { Flappy } from './games/flappy.js';
+import { Tetris } from './games/tetris.js';
+import { Pacman } from './games/pacman.js';
 
-const games = [Game2048, Sudoku, Snake, Wordle];
+const games = [Game2048, Sudoku, Wordle, Breakout, Asteroids, SpaceInvaders, Flappy, Tetris, Pacman];
 const registry = Object.fromEntries(games.map(g => [g.id, g]));
 
 const app = document.getElementById('app');
