@@ -8,8 +8,10 @@ import { Flappy } from './games/flappy.js';
 import { Tetris } from './games/tetris.js';
 import { Pacman } from './games/pacman.js';
 import { Crossy } from './games/crossy.js';
+import { SuperPang } from './games/superpang.js';
 
-const games = [Game2048, Sudoku, Wordle, Breakout, Asteroids, SpaceInvaders, Flappy, Tetris, Pacman, Crossy];
+const games = [Game2048, Sudoku, Wordle, Breakout, Asteroids, SpaceInvaders, Flappy, Tetris, Pacman, Crossy, SuperPang];
+
 const registry = Object.fromEntries(games.map(g => [g.id, g]));
 
 const app = document.getElementById('app');
@@ -28,9 +30,12 @@ function renderHome() {
   const header = document.createElement('div');
   header.className = 'home-header';
   header.innerHTML = `
-    <div>
-      <h1>Mis Juegos</h1>
-      <div class="sub">Elige uno para empezar</div>
+    <div style="display: flex; align-items: center; gap: 14px;">
+      <img src="icon.svg" alt="Arcade Logo" style="width: 52px; height: 52px; border-radius: 12px; filter: drop-shadow(0 0 8px rgba(236, 72, 153, 0.45));">
+      <div>
+        <h1 style="margin: 0; font-size: 28px; letter-spacing: -0.5px;">Mis Juegos</h1>
+        <div class="sub" style="color: var(--muted); font-size: 14px;">Elige uno para empezar</div>
+      </div>
     </div>
   `;
   app.appendChild(header);

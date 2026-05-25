@@ -500,3 +500,59 @@ button.ghost { background: transparent; }
 .wordle-stats .stat-val { color: var(--text); font-weight: 700; }
 .wordle-actions { display: flex; gap: 8px; }
 .wordle-actions button { flex: 1; }
+
+/* ===== Super Pang Mobile Controls ===== */
+.pang-controls {
+  display: flex;
+  gap: 12px;
+  margin-top: 4px;
+  align-items: center;
+  width: 100%;
+}
+.pang-dir-btns {
+  display: flex;
+  gap: 10px;
+  flex: 1;
+}
+.pang-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: inherit;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 20px;
+  font-weight: 800;
+  cursor: pointer;
+  flex: 1;
+  text-align: center;
+  min-height: 48px;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: background-color 0.1s, transform 0.05s, border-color 0.1s;
+}
+.pang-btn:active, .pang-btn.active {
+  background: var(--accent-2);
+  border-color: var(--accent-2);
+  color: #fff;
+  transform: scale(0.96);
+}
+.pang-fire-btn {
+  background: #f43f5e;
+  border-color: #f43f5e;
+  color: #fff;
+  flex: 1.2;
+  font-size: 15px;
+  letter-spacing: 0.5px;
+  box-shadow: 0 0 10px rgba(244, 63, 94, 0.3);
+}
+.pang-fire-btn:active, .pang-fire-btn.active {
+  background: #e11d48;
+  border-color: #e11d48;
+  transform: scale(0.96);
+  box-shadow: 0 0 4px rgba(244, 63, 94, 0.1);
+}
