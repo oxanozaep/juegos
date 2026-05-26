@@ -59,6 +59,15 @@ export const Crossy = {
     bar.appendChild(sScore.el); bar.appendChild(sBest.el);
     shell.appendChild(bar);
 
+    // Fila adicional de estadísticas (Promedio y Fecha de Récord)
+    const extraBar = document.createElement('div');
+    extraBar.className = 'crossy-extra-bar';
+    const sAvg = makeStat('Promedio (100)', '0');
+    const sDate = makeStat('Fecha Récord', '-');
+    sDate.el.querySelector('.value').classList.add('date-val');
+    extraBar.appendChild(sAvg.el); extraBar.appendChild(sDate.el);
+    shell.appendChild(extraBar);
+
     const gameWrap = document.createElement('div');
     shell.appendChild(gameWrap);
 
@@ -84,6 +93,14 @@ export const Crossy = {
     let score;
     let state;
     let best = loadBest();
+    let bestDate = loadBestDate();
+    let history = loadHistory();
+
+    function calculateAverage() {
+      if (history.length === 0) return 0;
+      const sum = history.reduce((a, b) => a + b, 0);
+      return Math.round(sum / history.length);
+    }
 
     const cg = mountCanvas(gameWrap, { aspectRatio: `${COLS} / ${VIEW_ROWS}`, update, draw });
     const overlay = makeOverlay(cg.wrap);
@@ -125,7 +142,13 @@ export const Crossy = {
       if (chicken.cy > maxY) {
         maxY = chicken.cy;
         score = maxY;
-        if (score > best) { best = score; saveBest(best); }
+        if (score > best) {
+          best = score;
+          saveBest(best);
+          const dateStr = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+          bestDate = dateStr;
+          saveBestDate(bestDate);
+        }
         updateBar();
       }
     }
@@ -133,13 +156,23 @@ export const Crossy = {
     function updateBar() {
       sScore.set(String(score));
       sBest.set(String(best));
+      sAvg.set(String(calculateAverage()));
+      sDate.set(bestDate);
     }
 
     function gameOver(reason) {
       state = 'over';
       beep(110, 0.3, 'sawtooth', 0.08);
+
+      // Registrar en el historial de 100 partidas
+      history.push(score);
+      if (history.length > 100) history.shift();
+      saveHistory(history);
+
+      updateBar();
+
       overlay.show(`<div class="msg">${reason}</div>
-        <div class="sub">Puntos: ${score} · Récord: ${best}</div>
+        <div class="sub">Puntos: ${score} · Récord: ${best} (${bestDate})</div>
         <button class="primary">Volver a jugar</button>`).querySelector('button')
         .addEventListener('click', newGame);
     }
@@ -402,3 +435,22 @@ export const Crossy = {
 
 function loadBest() { return parseInt(localStorage.getItem(BEST_KEY) || '0', 10) || 0; }
 function saveBest(v) { try { localStorage.setItem(BEST_KEY, String(v)); } catch {} }
+
+const BEST_DATE_KEY = 'games-hub.crossy.best-date';
+const HISTORY_KEY = 'games-hub.crossy.history';
+
+function loadBestDate() { return localStorage.getItem(BEST_DATE_KEY) || '-'; }
+function saveBestDate(v) { try { localStorage.setItem(BEST_DATE_KEY, String(v)); } catch {} }
+
+function loadHistory() {
+  try {
+    return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+  } catch {
+    return [];
+  }
+}
+function saveHistory(arr) {
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(arr));
+  } catch {}
+}

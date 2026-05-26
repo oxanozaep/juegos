@@ -556,3 +556,126 @@ button.ghost { background: transparent; }
   transform: scale(0.96);
   box-shadow: 0 0 4px rgba(244, 63, 94, 0.1);
 }
+
+/* ===== Auth & Profile Header Styles ===== */
+.auth-profile-box {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 48px;
+}
+
+.profile-logged {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 6px 12px 6px 6px;
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.profile-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.45);
+  object-fit: cover;
+}
+
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.2;
+}
+
+.profile-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-btn-logout {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 10px;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  border-radius: 0;
+}
+
+.profile-btn-logout:hover {
+  color: var(--error);
+}
+
+.profile-btn-logout:active {
+  transform: none;
+}
+
+.profile-btn-login {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, var(--accent) 0%, #d97706 100%);
+  border: 1px solid var(--accent);
+  color: #1a1a1d;
+  font-weight: 700;
+  padding: 8px 14px;
+  font-size: 13px;
+  border-radius: 12px;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.3);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.profile-btn-login:hover {
+  box-shadow: 0 0 18px rgba(245, 158, 11, 0.5);
+  transform: translateY(-1px);
+}
+
+.profile-btn-login:active {
+  transform: scale(0.97) translateY(0);
+}
+
+.profile-btn-login .btn-icon {
+  font-size: 14px;
+}
+
+/* ===== Crossy (Cruza) Additional Layout ===== */
+.crossy-extra-bar {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+  width: 100%;
+}
+
+.crossy-extra-bar .cg-stat {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 8px 12px;
+  text-align: center;
+}
+
+.cg-stat .value.date-val {
+  font-size: 14px !important;
+  line-height: 27px;
+  font-weight: 700;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+

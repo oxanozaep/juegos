@@ -9,6 +9,7 @@ import { Tetris } from './games/tetris.js';
 import { Pacman } from './games/pacman.js';
 import { Crossy } from './games/crossy.js';
 import { SuperPang } from './games/superpang.js';
+import { onAuthUpdate, signInWithGoogle, signOutUser } from './db-sync.js';
 
 const games = [Game2048, Sudoku, Wordle, Breakout, Asteroids, SpaceInvaders, Flappy, Tetris, Pacman, Crossy, SuperPang];
 
@@ -37,8 +38,10 @@ function renderHome() {
         <div class="sub" style="color: var(--muted); font-size: 14px;">Elige uno para empezar</div>
       </div>
     </div>
+    <div id="auth-profile" class="auth-profile-box"></div>
   `;
   app.appendChild(header);
+  updateProfileUI();
 
   const grid = document.createElement('div');
   grid.className = 'game-grid';
@@ -96,6 +99,53 @@ function render() {
   if (h === '#/' || h === '#') return renderHome();
   const id = h.replace(/^#\//, '');
   renderGame(id);
+}
+
+let userProfileData = null;
+
+onAuthUpdate((user) => {
+  userProfileData = user;
+  const h = location.hash || '#/';
+  if (h === '#/' || h === '#') {
+    updateProfileUI();
+  }
+});
+
+function updateProfileUI() {
+  const container = document.getElementById('auth-profile');
+  if (!container) return;
+
+  if (userProfileData) {
+    container.innerHTML = `
+      <div class="profile-logged">
+        <img class="profile-avatar" src="${userProfileData.photoURL || 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y'}" alt="Avatar">
+        <div class="profile-info">
+          <span class="profile-name">${userProfileData.displayName || 'Jugador'}</span>
+          <button id="signout-btn" class="profile-btn-logout">Cerrar sesión</button>
+        </div>
+      </div>
+    `;
+    document.getElementById('signout-btn').addEventListener('click', () => {
+      signOutUser();
+    });
+  } else {
+    container.innerHTML = `
+      <button id="signin-btn" class="profile-btn-login">
+        <span class="btn-icon">🎮</span> Conectar
+      </button>
+    `;
+    document.getElementById('signin-btn').addEventListener('click', async () => {
+      const btn = document.getElementById('signin-btn');
+      btn.disabled = true;
+      btn.innerHTML = `Cargando...`;
+      try {
+        await signInWithGoogle();
+      } catch (err) {
+        console.error("Error signing in:", err);
+        updateProfileUI();
+      }
+    });
+  }
 }
 
 window.addEventListener('hashchange', render);
